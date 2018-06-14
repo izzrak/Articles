@@ -23,12 +23,12 @@
 - 下载：git clone https://github.com/baidu-research/DeepBench
 - 编译显卡测试代码：在code/nvidia目录下，修改Makefile中的运行库路径。
 ```makefile
-ARCH?:描述了显卡构架，pascal系列显卡的标识代码为sm_61
+ARCH:描述了显卡构架，pascal系列显卡的标识代码为sm_61
 MPI_PATH: OpenMPI路径，如果使用apt install的方式安装，可以通过dpkg -L libopenmpi-dev查找储存路径。
 CUDA_PATH: CUDA路径，通常在/usr/local/cuda下。
 CUDNN_PATH: CuDNN路径. 储存路径取为安装时所复制到的路径，本机为/usr/local/cuda/lib64。
 NCCL_PATH: NCCL路径. 如果使用apt install的方式安装，可以通过dpkg -L libnccl2查找储存路径。
-NCCL_INCLUDE_PATH：nccl.h的储存路径，如果使用apt install的方式安装，可以通过dpkg -L libnccl-dev查找储存路径。
+NCCL_INCLUDE_PATH: nccl.h的储存路径，如果使用apt install的方式安装，可以通过dpkg -L libnccl-dev查找储存路径。
 ```
 在配置完成后，检查Makefile中的文本代码，使用make进行编译，编译完成后的程序储存在code/nvidia/bin中。
 编译好的程序一共有五个，分别为卷积测试程序conv_bench，矩阵运算库测试程序gemm_bench，显卡间通讯测试程序nccl_mpi_all_reduce以及nccl_single_all_reduce，循环神经网络测试程序rnn_bench。DeepBench提供了部分常用显卡的测试结果，可以在根目录中进行查看。
