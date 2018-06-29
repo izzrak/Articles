@@ -1,0 +1,24 @@
+# Docker的配置以及使用
+
+## 使用目的
+为了对视频里面的人脸的检测，需要使用python程序编写实现检测流程的脚本。通过调用opencv的视频读取函数(VideoCapture)，将视频中的画面以数组的形式(ndarray)，送给tensorflow进行处理。再将处理过的画面，根据视频的元参数(meta data)使用视频写入函数(VideoWrite)生成一个新的视频。这个检测流程依赖的主要框架包含Python，OpenCV的Python版，和Tensorflow-GPU版。
+然而在服务器中的linux下运行脚本时，发现OpenCV不能对视频进行读取。究其原因，则是发行版的opencv-python为第三方根据开源代码编译。在编译的时候，出于授权许可的考虑，并未加入FFmpeg解码器的支持。所以如果通过PyPI安装了opencv-python这个扩展包，则无法实现使用opencv对视频的操作。由于在已有系统下编译OpenCV会遇到很多兼容性问题，从而导致编译失败。选择配置一个docker环境实现检测流程就是一个非常合适的选择，docker环境相比于虚拟机，十分轻量但仍具有一定的隔离性，能够避免与主系统开发环境之间的依赖冲突。而Nvidia也提供了自己的docker扩展包，能够实现在docker环境中调用主机的GPU实现深度学习的训练及应用。
+
+## 配置docker
+使用docker环境运行GPU版的Tensorflow需要使用最新的docker社区版(community edition)和英Nvidia的nvidia-docker扩展包。使用apt-get先安装docker-ce再安装nvidia-docker2。可以下载nvidia/cuda的docker镜像(image)或者使用自己需要的镜像，在配置新的容器(container)时加入—runtime=nvidia来加载显卡，使用 -e NVIDIA_VISIBLE_DEVICES来加载制定序号的显卡，在终端中可以使用nvidia-smi查询GPU的状态。
+其次，需要在创建容器时制定需要挂载的目录，docker容器可以通过挂载主机的目录来实现与主机的数据交换。将所需要处理的视频或者图片的目录与处理脚本的目录一同挂载到容器跟目录的/mnt下，在容器里面就能在/mnt文件夹中进行访问。
+为了在Python上使用关联FFmpeg进行编译的OpenCV，则需要在创建镜像时采取相应操作，也可以在docker hub上寻找已经配置好的docker镜像。在docker hub上，找到valian/docker-python-opencv-ffmpeg:cuda-py3这个镜像满足要求，该镜像使用的Python版本为3.5，使用的OpenCV版本为3.2.0，使用的CUDA版本为8.0，CUDNN版本为6.0。使用该镜像配置新容器后，在新容器里面通过PyPI安装tensorflow-gpu，matplotlib以及pillow从而满足检测脚本所需的扩展包。完成满足要求的docker环境后，将正在运行的docker容器通过export或者save指令打包成镜像，今后通过加载新生成的镜像，即可立刻进入可以执行检测脚本的运行环境。
+
+##使用docker环境运行tenserflow脚本
+进入配置完毕的docker容器中，进入挂载的主机目录，对检测脚本中的路径进行修改即可使用。在配置docker容器的时候，可以指定一个工作目录，这个工作目录将存放所有的工程文件，这个工作目录也可以在主机上面进行访问。目前只有使用到docker容器进行训练，尚未对在docker下进行训练的方法进行研究。
+
+# 附录
+
+## 关联FFmpeg编译OpenCV的方法
+如果需要FFmpeg支持的python版OpenCV，则需要下载开源代码自行编译，之后将编译好的python扩展包倒入python即可。
+编译OpenCV需要执行下面几步：
+安装所需的依赖包
+下载OpenCV的开源代码
+使用cmake配置编译参数，在cmake选项中添加-D WITH_FFMPEG=ON来启动FFmpeg关联。
+检查配置无误后进行编译/安装
+安装成功后，使用video = cv2.VideoCapture(filepath)加载视频，并用print(video.isOpened())测试返回值是否为True。
